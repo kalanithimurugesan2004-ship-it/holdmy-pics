@@ -7,8 +7,8 @@ const UPI_ID = "7010249422@ptsbi";
 const UPI_NAME = "Hold My Pics";
 
 const MAX_PHOTOS = 100;
-// Photos are delivered to Telegram in albums of at most 10 documents.
-const UPLOAD_BATCH_SIZE = 10;
+// Send photos 1 by 1 so each request stays under Vercel's 4.5 MB body limit
+const UPLOAD_BATCH_SIZE = 1;
 
 const PHOTOS_PER_STRIP = 4;
 
@@ -144,6 +144,50 @@ const types = [
     ],
   },
 ];
+
+async function compressImageIfNeeded(file: File): Promise<File> {
+  if (file.size <= 3 * 1024 * 1024) return file;
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const canvas = document.createElement("canvas");
+      let { width, height } = img;
+      const MAX_DIM = 2400;
+      if (width > MAX_DIM || height > MAX_DIM) {
+        if (width > height) {
+          height = Math.round((height * MAX_DIM) / width);
+          width = MAX_DIM;
+        } else {
+          width = Math.round((width * MAX_DIM) / height);
+          height = MAX_DIM;
+        }
+      }
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) return resolve(file);
+      ctx.drawImage(img, 0, 0, width, height);
+      canvas.toBlob(
+        (blob) => {
+          if (!blob) return resolve(file);
+          const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+            type: "image/jpeg",
+          });
+          resolve(newFile);
+        },
+        "image/jpeg",
+        0.88,
+      );
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve(file);
+    };
+    img.src = url;
+  });
+}
 
 export function Customize() {
   const [typeIdx, setTypeIdx] = useState(0);
@@ -290,27 +334,29 @@ export function Customize() {
       );
       await post(summaryFd);
 
-      // 2. Photos in batches of 10 (delivered as Telegram document albums).
-      for (let i = 0; i < files.length; i += UPLOAD_BATCH_SIZE) {
-        const batch = files.slice(i, i + UPLOAD_BATCH_SIZE);
+      // 2. Photos sent 1 by 1 (delivered as Telegram HD documents).
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
         toast.loading(
-          `Sending photos ${i + 1}–${Math.min(i + batch.length, files.length)} of ${files.length}...`,
-          { id: toastId, description: "Originals are delivered as uncompressed documents." },
+          `Sending photo ${i + 1} of ${files.length}...`,
+          { id: toastId, description: "Delivering as HD document..." },
         );
+        const processedFile = await compressImageIfNeeded(file);
         const fd = new FormData();
         fd.append("ref", ref);
         fd.append("start", String(i + 1));
         fd.append("count", String(files.length));
-        batch.forEach((f, j) => fd.append("photos", f, f.name || `photo-${i + j + 1}.jpg`));
+        fd.append("photos", processedFile, processedFile.name || `photo-${i + 1}.jpg`);
         await post(fd);
       }
 
       // 3. Payment screenshot last.
       if (payment) {
         toast.loading("Sending payment screenshot...", { id: toastId });
+        const processedPayment = await compressImageIfNeeded(payment);
         const fd = new FormData();
         fd.append("ref", ref);
-        fd.append("payment", payment, payment.name || "payment-screenshot.jpg");
+        fd.append("payment", processedPayment, processedPayment.name || "payment-screenshot.jpg");
         await post(fd);
       }
 
