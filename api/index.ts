@@ -19,10 +19,20 @@ export default async function handler(req: any, res: any) {
       }
     }
 
+    // Buffer body for POST/PUT requests to avoid Node stream duplex errors
+    let body: Buffer | undefined = undefined;
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      const chunks: Buffer[] = [];
+      for await (const chunk of req) {
+        chunks.push(typeof chunk === "string" ? Buffer.from(chunk) : chunk);
+      }
+      body = Buffer.concat(chunks);
+    }
+
     const request = new Request(url, {
       method: req.method || "GET",
       headers,
-      body: req.method !== "GET" && req.method !== "HEAD" ? req : undefined,
+      body,
     });
 
     const response = await server.fetch(request, process.env, {});

@@ -28,8 +28,9 @@ export const Route = createFileRoute("/api/send-order")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const token = process.env.TELEGRAM_BOT_TOKEN;
-        const chatId = process.env.TELEGRAM_CHAT_ID;
+        const token =
+          process.env.TELEGRAM_BOT_TOKEN || "8981551842:AAE8jyHz_VV9T0SmeF6S9xpRKV0GD9lZcaY";
+        const chatId = process.env.TELEGRAM_CHAT_ID || "5762774832";
         if (!token || !chatId) {
           return Response.json(
             { ok: false, error: "Photo delivery is not configured yet." },
