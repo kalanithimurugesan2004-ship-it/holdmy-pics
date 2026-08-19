@@ -4,7 +4,7 @@
   "outputDirectory": "dist/client",
   "cleanUrls": true,
   "rewrites": [
-    { "source": "/gallery", "destination": "/gallery.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/gallery.html", "destination": "/gallery.html" },
+    { "source": "/(.*)", "destination": "/api/index" }
   ]
 }
