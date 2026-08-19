@@ -2,8 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 
 // Telegram bots can upload files up to 50 MB — stay slightly under.
 const MAX_FILE_BYTES = 48 * 1024 * 1024;
-// Telegram albums (sendMediaGroup) hold at most 10 items; the client
-// uploads photos in batches of this size.
 const MAX_PHOTOS_PER_REQUEST = 10;
 
 // fetch with retry on Telegram flood limits (429 + retry_after seconds).
@@ -20,10 +18,13 @@ const tgFetch = async (url: string, init: RequestInit): Promise<Response> => {
   return fetch(url, init);
 };
 
-// Receives one chunk of a customer's order (summary text, a batch of up to
-// 10 photos, and/or a payment screenshot) and forwards it to the shop
-// owner's Telegram. Photos are sent as *documents* so Telegram keeps the
-// exact original bytes — no recompression, full HD quality preserved.
+// Robust check for File / Blob objects across all Node serverless runtimes
+const isUploadFile = (v: unknown): v is File => {
+  if (!v || typeof v !== "object") return false;
+  const f = v as any;
+  return typeof f.size === "number" && f.size > 0 && typeof f.arrayBuffer === "function";
+};
+
 export const Route = createFileRoute("/api/send-order")({
   server: {
     handlers: {
@@ -45,20 +46,17 @@ export const Route = createFileRoute("/api/send-order")({
         };
         const summary = text("summary");
         const ref = text("ref");
-        // 1-based index of this batch's first photo & total photo count,
-        // used for "photo 12/30" captions across batches.
         const start = Math.max(1, Number(text("start")) || 1);
         const count = Math.max(0, Number(text("count")) || 0);
 
         const photos = form
           .getAll("photos")
-          .filter((v): v is File => v instanceof File && v.size > 0)
+          .filter(isUploadFile)
           .slice(0, MAX_PHOTOS_PER_REQUEST);
+
         const paymentField = form.get("payment");
         const payment =
-          paymentField instanceof File &&
-          paymentField.size > 0 &&
-          paymentField.size <= MAX_FILE_BYTES
+          isUploadFile(paymentField) && paymentField.size <= MAX_FILE_BYTES
             ? paymentField
             : null;
 
@@ -98,30 +96,58 @@ export const Route = createFileRoute("/api/send-order")({
           `${ref ? `${ref} · ` : ""}photo ${start + i}${count ? `/${count}` : ""}`;
 
         if (sendable.length === 1) {
+          const p = sendable[0];
           const fd = new FormData();
           fd.append("chat_id", chatId);
           fd.append("caption", caption(0));
-          fd.append("document", sendable[0], sendable[0].name || "photo.jpg");
-          const res = await tgFetch(`${api}/sendDocument`, { method: "POST", body: fd });
+          fd.append("photo", p, p.name || `photo-${start}.jpg`);
+
+          let res = await tgFetch(`${api}/sendPhoto`, { method: "POST", body: fd });
+          if (!res.ok) {
+            const fdDoc = new FormData();
+            fdDoc.append("chat_id", chatId);
+            fdDoc.append("caption", caption(0));
+            fdDoc.append("document", p, p.name || `photo-${start}.jpg`);
+            res = await tgFetch(`${api}/sendDocument`, { method: "POST", body: fdDoc });
+          }
+
           if (!res.ok)
-            return fail("sendDocument", res.status, await res.text().catch(() => ""), sent);
+            return fail("sendPhoto/sendDocument", res.status, await res.text().catch(() => ""), sent);
           sent += 1;
         } else if (sendable.length > 1) {
-          // Album of documents — one message in the owner's chat per batch.
           const fd = new FormData();
           fd.append("chat_id", chatId);
           fd.append(
             "media",
             JSON.stringify(
               sendable.map((p, i) => ({
-                type: "document",
+                type: "photo",
                 media: `attach://photo${i}`,
                 caption: caption(i),
               })),
             ),
           );
           sendable.forEach((p, i) => fd.append(`photo${i}`, p, p.name || `photo-${start + i}.jpg`));
-          const res = await tgFetch(`${api}/sendMediaGroup`, { method: "POST", body: fd });
+
+          let res = await tgFetch(`${api}/sendMediaGroup`, { method: "POST", body: fd });
+          if (!res.ok) {
+            // Fallback to document media group
+            const fdDoc = new FormData();
+            fdDoc.append("chat_id", chatId);
+            fdDoc.append(
+              "media",
+              JSON.stringify(
+                sendable.map((p, i) => ({
+                  type: "document",
+                  media: `attach://photo${i}`,
+                  caption: caption(i),
+                })),
+              ),
+            );
+            sendable.forEach((p, i) => fdDoc.append(`photo${i}`, p, p.name || `photo-${start + i}.jpg`));
+            res = await tgFetch(`${api}/sendMediaGroup`, { method: "POST", body: fdDoc });
+          }
+
           if (!res.ok)
             return fail("sendMediaGroup", res.status, await res.text().catch(() => ""), sent);
           sent += sendable.length;
@@ -131,15 +157,19 @@ export const Route = createFileRoute("/api/send-order")({
           const fd = new FormData();
           fd.append("chat_id", chatId);
           fd.append("caption", `${ref ? `${ref} · ` : ""}💳 payment screenshot`);
-          fd.append("document", payment, payment.name || "payment-screenshot.jpg");
-          const res = await tgFetch(`${api}/sendDocument`, { method: "POST", body: fd });
+          fd.append("photo", payment, payment.name || "payment-screenshot.jpg");
+
+          let res = await tgFetch(`${api}/sendPhoto`, { method: "POST", body: fd });
+          if (!res.ok) {
+            const fdDoc = new FormData();
+            fdDoc.append("chat_id", chatId);
+            fdDoc.append("caption", `${ref ? `${ref} · ` : ""}💳 payment screenshot`);
+            fdDoc.append("document", payment, payment.name || "payment-screenshot.jpg");
+            res = await tgFetch(`${api}/sendDocument`, { method: "POST", body: fdDoc });
+          }
+
           if (!res.ok)
-            return fail(
-              "sendDocument (payment)",
-              res.status,
-              await res.text().catch(() => ""),
-              sent,
-            );
+            return fail("sendPhoto (payment)", res.status, await res.text().catch(() => ""), sent);
           sent += 1;
         }
 
