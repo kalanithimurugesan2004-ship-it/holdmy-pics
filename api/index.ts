@@ -2,8 +2,17 @@
 // @ts-ignore
 import server from "../dist/server/server.js";
 
+// Auto-initialize Telegram credentials so no manual Vercel environment variable setup is needed
+process.env.TELEGRAM_BOT_TOKEN =
+  process.env.TELEGRAM_BOT_TOKEN || "8981551842:AAE8jyHz_VV9T0SmeF6S9xpRKV0GD9lZcaY";
+process.env.TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "5762774832";
+
 export default async function handler(req: any, res: any) {
   try {
+    process.env.TELEGRAM_BOT_TOKEN =
+      process.env.TELEGRAM_BOT_TOKEN || "8981551842:AAE8jyHz_VV9T0SmeF6S9xpRKV0GD9lZcaY";
+    process.env.TELEGRAM_CHAT_ID = process.env.TELEGRAM_CHAT_ID || "5762774832";
+
     const protocol = req.headers["x-forwarded-proto"] || "https";
     const host = req.headers["x-forwarded-host"] || req.headers.host || "localhost";
     const url = `${protocol}://${host}${req.url || "/"}`;
