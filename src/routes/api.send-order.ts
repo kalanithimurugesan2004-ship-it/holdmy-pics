@@ -4,6 +4,41 @@ import { createFileRoute } from "@tanstack/react-router";
 const MAX_FILE_BYTES = 48 * 1024 * 1024;
 const MAX_PHOTOS_PER_REQUEST = 10;
 
+// Rate limiting settings: 30 requests per minute per IP address
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const MAX_REQUESTS_PER_WINDOW = 30;
+
+const ipRequestMap = new Map<string, number[]>();
+
+const getClientIp = (request: Request): string => {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  const realIp = request.headers.get("x-real-ip");
+  if (realIp) return realIp.trim();
+  return "127.0.0.1";
+};
+
+const checkRateLimit = (
+  ip: string,
+): { allowed: boolean; remaining: number; retryAfterSec: number } => {
+  const now = Date.now();
+  const timestamps = (ipRequestMap.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+
+  if (timestamps.length >= MAX_REQUESTS_PER_WINDOW) {
+    const oldest = timestamps[0];
+    const retryAfterSec = Math.ceil((oldest + RATE_LIMIT_WINDOW_MS - now) / 1000);
+    return { allowed: false, remaining: 0, retryAfterSec: Math.max(1, retryAfterSec) };
+  }
+
+  timestamps.push(now);
+  ipRequestMap.set(ip, timestamps);
+  return {
+    allowed: true,
+    remaining: MAX_REQUESTS_PER_WINDOW - timestamps.length,
+    retryAfterSec: 0,
+  };
+};
+
 // fetch with retry on Telegram flood limits (429 + retry_after seconds).
 const tgFetch = async (url: string, init: RequestInit): Promise<Response> => {
   for (let attempt = 0; attempt < 3; attempt++) {
@@ -29,6 +64,26 @@ export const Route = createFileRoute("/api/send-order")({
   server: {
     handlers: {
       POST: async ({ request }) => {
+        // 1. Rate Limiting Check
+        const clientIp = getClientIp(request);
+        const rateCheck = checkRateLimit(clientIp);
+        if (!rateCheck.allowed) {
+          return Response.json(
+            {
+              ok: false,
+              error: `Too many requests. Please wait ${rateCheck.retryAfterSec} seconds before trying again.`,
+            },
+            {
+              status: 429,
+              headers: {
+                "Retry-After": String(rateCheck.retryAfterSec),
+                "X-RateLimit-Limit": String(MAX_REQUESTS_PER_WINDOW),
+                "X-RateLimit-Remaining": "0",
+              },
+            },
+          );
+        }
+
         const token =
           process.env.TELEGRAM_BOT_TOKEN || "8981551842:AAE8jyHz_VV9T0SmeF6S9xpRKV0GD9lZcaY";
         const chatId = process.env.TELEGRAM_CHAT_ID || "5762774832";
@@ -173,7 +228,15 @@ export const Route = createFileRoute("/api/send-order")({
           sent += 1;
         }
 
-        return Response.json({ ok: true, sent, skipped });
+        return Response.json(
+          { ok: true, sent, skipped },
+          {
+            headers: {
+              "X-RateLimit-Limit": String(MAX_REQUESTS_PER_WINDOW),
+              "X-RateLimit-Remaining": String(rateCheck.remaining),
+            },
+          },
+        );
       },
     },
   },
