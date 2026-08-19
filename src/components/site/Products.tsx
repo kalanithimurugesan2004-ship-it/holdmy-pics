@@ -4,23 +4,23 @@ import { ArrowUpRight } from "lucide-react";
 
 export function Products() {
   return (
-    <section id="products" className="relative py-24 md:py-32">
+    <section id="products" className="relative py-12 sm:py-20 md:py-28">
       <div className="mx-auto max-w-7xl px-4">
-        <div className="flex flex-wrap items-end justify-between gap-6 mb-14">
+        <div className="flex flex-wrap items-end justify-between gap-4 sm:gap-6 mb-8 sm:mb-12">
           <div>
-            <p className="u-eyebrow mb-3">
+            <p className="u-eyebrow mb-2 sm:mb-3">
               Shop the prints
             </p>
-            <h2 className="font-display text-4xl md:text-6xl font-light leading-[1.05] text-balance">
+            <h2 className="font-display text-2.5xl sm:text-4xl md:text-5xl font-light leading-[1.05] text-balance">
               Memories you can <em className="italic text-gradient">hold.</em>
             </h2>
           </div>
-          <p className="max-w-md text-foreground/60">
+          <p className="max-w-md text-sm sm:text-base text-foreground/60">
             Hand-finished, photo-paper perfect. Pick a format, upload your pics and we&apos;ll do
             the rest.
           </p>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 items-start">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5 items-start">
           {products.map((p, i) => (
             <article
               key={p.name}
@@ -39,14 +39,14 @@ export function Products() {
                   </span>
                 )}
               </div>
-              <div className="flex flex-col flex-1 p-5">
-                <h3 className="font-display text-xl">{p.name}</h3>
+              <div className="flex flex-col flex-1 p-4 sm:p-5">
+                <h3 className="font-display text-lg sm:text-xl">{p.name}</h3>
                 <p className="text-xs text-primary/80 mt-0.5">{p.tagline}</p>
-                <p className="text-sm text-foreground/60 leading-relaxed mt-2 break-words">
+                <p className="text-xs sm:text-sm text-foreground/60 leading-relaxed mt-2 break-words">
                   {p.description}
                 </p>
 
-                <ul className="space-y-1.5 text-sm border-t border-border/70 pt-3 mt-4">
+                <ul className="space-y-1.5 text-xs sm:text-sm border-t border-border/70 pt-3 mt-4">
                   {p.variants.map((v) => (
                     <li key={v.label} className="flex items-center justify-between">
                       <span className="text-foreground/70">{v.label}</span>
@@ -57,7 +57,7 @@ export function Products() {
 
                 <a
                   href={`#customize`}
-                  className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-secondary hover:bg-foreground hover:text-background transition-colors px-4 py-2.5 text-sm font-medium"
+                  className="mt-4 inline-flex items-center justify-center gap-1.5 rounded-full bg-secondary hover:bg-foreground hover:text-background transition-colors px-4 py-2.5 text-xs sm:text-sm font-medium"
                 >
                   Customize Now
                   <ArrowUpRight size={14} />
@@ -100,7 +100,6 @@ function CollageImage({ images }: { images: string[] }) {
 function ProductImage({ fallback, alt }: { fallback: string; alt: string }) {
   const [src, setSrc] = useState(fallback);
 
-  // derive a slug from the alt/name to look for a runtime override at /assets/<slug>.jpg
   const slug = alt
     .toLowerCase()
     .replace(/&/g, "and")
@@ -112,7 +111,6 @@ function ProductImage({ fallback, alt }: { fallback: string; alt: string }) {
   useEffect(() => {
     let cancelled = false;
 
-    // Check if runtime asset exists before switching — avoids broken image flashes
     fetch(runtime, { method: "HEAD" })
       .then((res) => {
         if (!cancelled && res.ok) setSrc(runtime);
