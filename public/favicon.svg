@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#161221" />
+      <stop offset="100%" stop-color="#0e0c14" />
+    </linearGradient>
+    <linearGradient id="camGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a78bfa" />
+      <stop offset="50%" stop-color="#7c3aed" />
+      <stop offset="100%" stop-color="#c084fc" />
+    </linearGradient>
+    <linearGradient id="lensGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8f5ff" />
+      <stop offset="100%" stop-color="#a78bfa" />
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="128" fill="url(#bg)" />
+  <rect width="504" height="504" x="4" y="4" rx="124" fill="none" stroke="url(#camGrad)" stroke-width="8" stroke-opacity="0.4" />
+
+  <g>
+    <path d="M 192 144 L 232 112 L 280 112 L 320 144 Z" fill="url(#camGrad)" />
+    <rect x="80" y="144" width="352" height="256" rx="48" fill="url(#camGrad)" />
+    <circle cx="144" cy="200" r="16" fill="#f9a8d4" opacity="0.9" />
+    <circle cx="368" cy="200" r="12" fill="#fbbf24" opacity="0.9" />
+    <circle cx="256" cy="272" r="88" fill="#161221" stroke="#f8f5ff" stroke-width="12" />
+    <circle cx="256" cy="272" r="56" fill="url(#lensGrad)" />
+    <circle cx="272" cy="256" r="18" fill="#ffffff" opacity="0.8" />
+  </g>
+</svg>
