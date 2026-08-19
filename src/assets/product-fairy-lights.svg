@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800" width="640" height="800" fill="none">
+  <defs>
+    <linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3a2560"/>
+      <stop offset="0.55" stop-color="#4a2f78"/>
+      <stop offset="1" stop-color="#2c1c50"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff3d0" stop-opacity="0.95"/>
+      <stop offset="0.35" stop-color="#ffd88a" stop-opacity="0.8"/>
+      <stop offset="1" stop-color="#ffd88a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="ambient" cx="0.5" cy="0.35" r="0.75">
+      <stop offset="0" stop-color="#7a5bb0" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#7a5bb0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="640" height="800" fill="url(#dusk)"/>
+  <rect width="640" height="800" fill="url(#ambient)"/>
+
+  <!-- three draping wires -->
+  <g stroke="#1f143a" stroke-width="2.5" fill="none" opacity="0.8">
+    <path d="M-10 120 Q160 230 320 140 T650 170"/>
+    <path d="M-10 340 Q170 450 330 360 T650 390"/>
+    <path d="M-10 560 Q150 670 330 580 T650 610"/>
+  </g>
+
+  <!-- bulbs: big soft halo + bright core, placed along the wires -->
+  <g>
+    <!-- row 1 -->
+    <g transform="translate(70 150)"><circle r="34" fill="url(#glow)"/><circle r="6.5" fill="#fff6dd"/><rect x="-3" y="-13" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(180 196)"><circle r="30" fill="url(#glow)"/><circle r="6" fill="#fff6dd"/><rect x="-3" y="-12" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(300 150)"><circle r="36" fill="url(#glow)"/><circle r="7" fill="#fff6dd"/><rect x="-3" y="-14" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(430 150)"><circle r="30" fill="url(#glow)"/><circle r="6" fill="#fff6dd"/><rect x="-3" y="-12" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(560 178)"><circle r="33" fill="url(#glow)"/><circle r="6.5" fill="#fff6dd"/><rect x="-3" y="-13" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <!-- row 2 -->
+    <g transform="translate(90 372)"><circle r="30" fill="url(#glow)"/><circle r="6" fill="#fff6dd"/><rect x="-3" y="-12" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(210 416)"><circle r="35" fill="url(#glow)"/><circle r="7" fill="#fff6dd"/><rect x="-3" y="-13" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(330 372)"><circle r="30" fill="url(#glow)"/><circle r="6" fill="#fff6dd"/><rect x="-3" y="-12" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(455 372)"><circle r="34" fill="url(#glow)"/><circle r="6.5" fill="#fff6dd"/><rect x="-3" y="-13" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(575 398)"><circle r="29" fill="url(#glow)"/><circle r="6" fill="#fff6dd"/><rect x="-3" y="-12" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <!-- row 3 -->
+    <g transform="translate(80 592)"><circle r="33" fill="url(#glow)"/><circle r="6.5" fill="#fff6dd"/><rect x="-3" y="-13" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(205 636)"><circle r="30" fill="url(#glow)"/><circle r="6" fill="#fff6dd"/><rect x="-3" y="-12" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(330 592)"><circle r="36" fill="url(#glow)"/><circle r="7" fill="#fff6dd"/><rect x="-3" y="-14" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(460 594)"><circle r="30" fill="url(#glow)"/><circle r="6" fill="#fff6dd"/><rect x="-3" y="-12" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+    <g transform="translate(575 616)"><circle r="32" fill="url(#glow)"/><circle r="6.5" fill="#fff6dd"/><rect x="-3" y="-13" width="6" height="6" rx="1.5" fill="#2a1c46"/></g>
+  </g>
+
+  <!-- label chip -->
+  <g transform="translate(320 730)">
+    <rect x="-96" y="-24" width="192" height="48" rx="24" fill="#f5ead9"/>
+    <text x="0" y="6" font-family="Georgia, serif" font-size="21" letter-spacing="3" fill="#3a2560" text-anchor="middle">FAIRY LIGHTS</text>
+  </g>
+</svg>
